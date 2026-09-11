@@ -1,16 +1,32 @@
-# React + Vite
+# 🏡 Highland & Co. Property Lettings & Management — Birmingham, UK
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A luxury real estate and property management platform engineered for an independent estate agency in Birmingham City Centre, UK.
 
-Currently, two official plugins are available:
+🔗 **Live Website:** [https://highlandpropertybirmingham.vercel.app](https://highlandpropertybirmingham.vercel.app)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🎯 Business Highlights
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Dynamic Property Filtering:** Real-time filtering by tenancy type (Rent vs. Buy), bedrooms, and Birmingham districts (Jewellery Quarter, Edgbaston, City Core).
+- **Instant Rental Yield Calculator:** Interactive tool for buy-to-let landlords to estimate monthly yields and book in-person appraisals.
+- **UK Industry Accreditations:** Features verified compliance badges including ARLA Propertymark, The Property Ombudsman (TPO), and SafeAgent.
+- **Local Birmingham SEO:** Embedded `RealEstateAgent` Schema.org JSON-LD targeting West Midlands postcodes (`B3 2BJ`).
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Tech Stack
+
+- **Frontend:** React 19 + Vite
+- **Styling:** Tailwind CSS (Deep Oxford Slate & Warm Gold accents)
+- **Icons:** Lucide React
+- **Hosting:** Vercel
+
+---
+
+## 👨‍💻 Developer
+
+**Victor Osita**  
+*Web Performance & Google Search Visibility Specialist*  
+- Portfolio: [https://my-portfolio-kappa-wheat-blwrwaz4w3.vercel.app](https://my-portfolio-kappa-wheat-blwrwaz4w3.vercel.app)
+- LinkedIn: [/in/victor-osita-egbe](https://linkedin.com/in/victor-osita-egbe)
