@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Menu,
   X,
-  Calendar,
   Phone,
   Mail,
   ArrowRight,
@@ -17,1120 +16,1054 @@ import {
   Shield,
   Heart,
   Search,
-  Home,
-  FileText,
-  Users,
   TrendingUp,
   Lock,
-  Zap,
+  Award,
+  Sparkles,
 } from 'lucide-react'
-import './App.css'
+
+// =========================================================================
+// 📸 4 IMAGE SLOTS FOR YOUR ASSETS
+// When ready, place your photos in /src/assets and swap these lines:
+// import heroImg from './assets/hero-birmingham.jpg'
+// import property1Img from './assets/penthouse-jewellery-quarter.jpg'
+// import property2Img from './assets/detached-edgbaston.jpg'
+// import property3Img from './assets/apartment-mailbox.jpg'
+// =========================================================================
+const heroImg = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80'
+const property1Img = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80'
+const property2Img = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1000&q=80'
+const property3Img = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1000&q=80'
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [filterType, setFilterType] = useState('rent')
   const [filterBeds, setFilterBeds] = useState('any')
   const [filterLocation, setFilterLocation] = useState('all')
-  const [filterPrice, setFilterPrice] = useState('any')
-  const [showViewingForm, setShowViewingForm] = useState(false)
-  const [showValuationForm, setShowValuationForm] = useState(false)
+  const [showViewingModal, setShowViewingModal] = useState(false)
+  const [modalType, setModalType] = useState('viewing') // 'viewing' | 'valuation'
   const [calculatorLocation, setCalculatorLocation] = useState('jewellery')
   const [calculatorBeds, setCalculatorBeds] = useState('2')
   const [calculatorYield, setCalculatorYield] = useState(null)
-  const [viewingFormData, setViewingFormData] = useState({
+  const [expandedFaq, setExpandedFaq] = useState(null)
+  const [savedProps, setSavedProps] = useState([])
+  const [formSubmitted, setFormSubmitted] = useState(false)
+
+  const [formData, setFormData] = useState({
     name: '',
     email: '',
-    mobile: '',
-    interestedIn: 'viewing',
+    phone: '',
+    service: 'Letting & Management',
     date: '',
-    message: '',
+    notes: '',
   })
-  const [viewingSubmitted, setViewingSubmitted] = useState(false)
-  const [expandedFaq, setExpandedFaq] = useState(null)
 
+  // UK Property listings with energy efficiency (EPC) & Council Tax Bands
   const properties = [
     {
       id: 1,
-      title: 'Luxury 2-Bed Penthouse',
-      location: 'Jewellery Quarter',
+      title: 'The St. Paul’s Penthouse',
+      location: 'Jewellery Quarter, Birmingham',
+      postcode: 'B3 1RB',
       beds: 2,
       baths: 2,
       price: 1850,
       type: 'rent',
       badge: 'NEW TO MARKET',
-      description: 'Stunning city views, smart home integration',
+      epc: 'EPC B',
+      councilTax: 'Band D',
+      image: property1Img,
       parking: true,
+      description: 'Panoramic skyline views, Italian marble bathrooms, private terrace & secure gated parking.',
     },
     {
       id: 2,
-      title: 'Executive 4-Bed Detached',
-      location: 'Edgbaston',
+      title: 'The Calthorpe Residence',
+      location: 'Edgbaston, Birmingham',
+      postcode: 'B15 3TR',
       beds: 4,
       baths: 3,
       price: 3200,
       type: 'rent',
       badge: 'FEATURED',
-      description: 'Period property with modern updates, private garden',
+      epc: 'EPC C',
+      councilTax: 'Band G',
+      image: property2Img,
       parking: true,
+      description: 'Stately Victorian detached home, landscaped south-facing garden, bespoke shaker kitchen.',
     },
     {
       id: 3,
-      title: 'Modern 1-Bed Canal-Side',
-      location: 'Mailbox District',
+      title: 'Canal-Side Luxury Suite',
+      location: 'Mailbox District, Birmingham',
+      postcode: 'B1 1RD',
       beds: 1,
       baths: 1,
-      price: 1150,
+      price: 1250,
       type: 'rent',
-      badge: null,
-      description: 'Contemporary apartment with balcony views',
+      badge: 'VIRTUAL TOUR',
+      epc: 'EPC B',
+      councilTax: 'Band C',
+      image: property3Img,
       parking: false,
-    },
-    {
-      id: 4,
-      title: 'Contemporary 2-Bed Duplex',
-      location: 'Digbeth',
-      beds: 2,
-      baths: 2,
-      price: 1400,
-      type: 'rent',
-      badge: null,
-      description: 'Arts district living, open plan design',
-      parking: true,
-    },
-    {
-      id: 5,
-      title: 'Georgian 5-Bed Residence',
-      location: 'Harborne Village',
-      beds: 5,
-      baths: 3,
-      price: 850000,
-      type: 'sale',
-      badge: null,
-      description: 'Period charm with contemporary comforts',
-      parking: true,
-    },
-    {
-      id: 6,
-      title: 'Studio Apartment',
-      location: 'Colmore Business District',
-      beds: 1,
-      baths: 1,
-      price: 950,
-      type: 'rent',
-      badge: 'LET AGREED',
-      description: 'Compact luxury, perfect for professionals',
-      parking: false,
+      description: 'Boutique waterfront living moments from New Street Station and Colmore Business District.',
     },
   ]
 
-  const filteredProperties = properties.filter(prop => {
+  const filteredProperties = properties.filter((prop) => {
     if (prop.type !== filterType) return false
     if (filterBeds !== 'any') {
-      const beds = parseInt(filterBeds)
+      const beds = parseInt(filterBeds, 10)
       if (filterBeds === '3+' && prop.beds < 3) return false
       if (filterBeds !== '3+' && prop.beds !== beds) return false
     }
-    if (filterLocation !== 'all' && prop.location !== filterLocation) return false
+    if (filterLocation !== 'all' && !prop.location.toLowerCase().includes(filterLocation.toLowerCase())) {
+      return false
+    }
     return true
   })
 
-  const handleCalculateYield = () => {
-    const baseYields = {
-      jewellery: { 1: 5.2, 2: 4.8, 3: 4.5, 4: 4.2 },
-      edgbaston: { 1: 4.8, 2: 4.5, 3: 4.2, 4: 3.9 },
-      citycore: { 1: 5.5, 2: 5.1, 3: 4.8, 4: 4.5 },
-      digbeth: { 1: 5.3, 2: 4.9, 3: 4.6, 4: 4.3 },
-      solihull: { 1: 5.0, 2: 4.6, 3: 4.3, 4: 4.0 },
-    }
-    const beds = parseInt(calculatorBeds)
-    const yield_val = baseYields[calculatorLocation]?.[beds] || 4.5
-    setCalculatorYield(yield_val)
+  const toggleSave = (id) => {
+    setSavedProps((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    )
   }
 
-  const handleViewingSubmit = (e) => {
-    e.preventDefault()
-    if (
-      viewingFormData.name &&
-      viewingFormData.email &&
-      viewingFormData.mobile
-    ) {
-      setViewingSubmitted(true)
-      setTimeout(() => {
-        setShowViewingForm(false)
-        setShowValuationForm(false)
-        setViewingSubmitted(false)
-        setViewingFormData({
-          name: '',
-          email: '',
-          mobile: '',
-          interestedIn: 'viewing',
-          date: '',
-          message: '',
-        })
-      }, 3000)
+  const handleOpenModal = (type) => {
+    setModalType(type)
+    setFormData((prev) => ({
+      ...prev,
+      service: type === 'valuation' ? 'Landlord Valuation' : 'Property Viewing',
+    }))
+    setShowViewingModal(true)
+  }
+
+  const handleCalculateYield = () => {
+    const baseYields = {
+      jewellery: { 1: 5.6, 2: 5.1, 3: 4.8, 4: 4.4 },
+      edgbaston: { 1: 4.9, 2: 4.6, 3: 4.3, 4: 4.0 },
+      citycore: { 1: 5.9, 2: 5.4, 3: 5.0, 4: 4.7 },
+      digbeth: { 1: 6.2, 2: 5.7, 3: 5.2, 4: 4.9 },
     }
+    const beds = parseInt(calculatorBeds, 10)
+    const yieldVal = baseYields[calculatorLocation]?.[beds] || 5.1
+    setCalculatorYield(yieldVal)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setFormSubmitted(true)
+    setTimeout(() => {
+      setShowViewingModal(false)
+      setFormSubmitted(false)
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        service: 'Letting & Management',
+        date: '',
+        notes: '',
+      })
+    }, 2800)
   }
 
   const faqs = [
     {
-      q: 'What are the standard tenant referencing checks in the UK?',
-      a: 'Our rigorous vetting includes credit checks, employment verification, previous landlord references, and right-to-rent checks. We ensure only the most reliable tenants move into your property.',
+      q: 'How does the Guaranteed Rent Scheme protect landlords?',
+      a: 'We take full financial responsibility for the property. You receive a guaranteed fixed rent on the 1st of every calendar month with zero void periods, zero tenant arrears risk, and zero management commission deducted.',
     },
     {
-      q: "How does your Guaranteed Rent scheme protect landlords?",
-      a: 'Our Guaranteed Rent Scheme provides fixed monthly income regardless of occupancy. We manage all tenant management, maintenance, and void periods. You receive guaranteed payments on the 1st of every month.',
+      q: 'Which UK deposit scheme do you use?',
+      a: 'All security deposits are safely registered under the Tenancy Deposit Scheme (TDS) Custodial branch in strict adherence to the Housing Act 2004.',
     },
     {
-      q: 'How quickly can you let a property in Birmingham City Centre?',
-      a: 'With our extensive tenant database and marketing reach, we typically let properties within 2-4 weeks. Our premium properties in high-demand areas often receive multiple applications within days.',
+      q: 'What referencing checks do you run on prospective tenants?',
+      a: 'We perform 6-step institutional vetting: UK Right-to-Rent verification, Experian credit checks, 3 years of residential history, employer income verification (30x monthly rent ratio), and direct bank confirmation.',
     },
     {
-      q: 'Are client deposits protected under a government scheme?',
-      a: 'Yes, all deposits are protected under the Tenancy Deposit Scheme (TDS), ensuring full protection for both landlords and tenants as required by UK law.',
+      q: 'How quickly can you let my Birmingham property?',
+      a: 'Our average time to agreed let across Birmingham City Centre, Edgbaston, and Harborne is 11 days, aided by our corporate relocation network with HSBC UK, PwC, and Deutsche Bank.',
     },
   ]
 
   return (
-    <div className="bg-slate-dark text-white min-h-screen">
-      {/* JSON-LD Structured Data */}
-      <script type="application/ld+json">
-        {JSON.stringify({
-          '@context': 'https://schema.org/',
-          '@type': 'RealEstateAgent',
-          name: 'Highland & Co. Property Lettings & Estate Management',
-          description:
-            'Premier independent estate agency and lettings specialists based in Birmingham City Centre, UK',
-          address: {
-            '@type': 'PostalAddress',
-            streetAddress: 'Colmore Row',
-            addressLocality: 'Birmingham',
-            addressRegion: 'West Midlands',
-            postalCode: 'B3 2BJ',
-            addressCountry: 'GB',
-          },
-          telephone: '0121 496 0880',
-          url: 'https://highlandco.co.uk',
-          areaServed: {
-            '@type': 'City',
-            name: 'Birmingham',
-          },
-          sameAs: [
-            'https://facebook.com/highlandco',
-            'https://instagram.com/highlandco',
-            'https://linkedin.com/company/highlandco',
-          ],
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: 5.0,
-            reviewCount: 160,
-            ratingCount: 160,
-          },
-          foundingDate: '2010',
-        })}
-      </script>
-
-      {/* 1. ANNOUNCEMENT BAR */}
-      <div className="bg-gradient-to-r from-oxford-navy to-slate-dark border-b border-gold-light/20 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-2 text-center text-sm md:text-base">
-          <span className="text-gold-light">
-            🏡 Birmingham's Trusted Lettings & Estate Specialists | Guaranteed Rent
-            For Landlords | Call Our Colmore Row Office:{' '}
-            <a href="tel:0121496880" className="font-bold hover:text-gold transition">
+    <div className="min-h-screen bg-[#070D18] text-slate-100 font-sans selection:bg-[#C9A86A] selection:text-slate-950">
+      {/* 1. TOP UK STATUTORY BAR */}
+      <aside aria-label="Statutory Information" className="bg-[#0B1528] border-b border-amber-400/20 text-xs text-amber-200/90 py-2.5 px-4 tracking-wide">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-center sm:text-left">
+          <div className="flex items-center gap-2 mx-auto sm:mx-0">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Independent Birmingham Estate Specialists | Regulated by <strong>ARLA Propertymark</strong> & <strong>TPO</strong></span>
+          </div>
+          <div className="flex items-center gap-4 mx-auto sm:mx-0 font-medium">
+            <span>Colmore Row Office:</span>
+            <a href="tel:01214960880" className="text-white hover:text-amber-300 transition-colors underline decoration-amber-400/50">
               0121 496 0880
             </a>
-          </span>
+          </div>
         </div>
-      </div>
+      </aside>
 
-      {/* 2. NAVBAR */}
-      <nav className="bg-oxford-navy/95 backdrop-blur border-b border-gold-light/20 sticky top-11 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-8 h-8 text-gold-light" />
-              <span className="text-xl font-bold text-gold-light">HIGHLAND & CO.</span>
-            </div>
+      {/* 2. NAVIGATION BAR */}
+      <header className="sticky top-0 z-40 bg-[#070D18]/90 backdrop-blur-md border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <a href="#" className="flex items-center gap-3 group focus:outline-none">
+              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-[#C9A86A] to-[#99793D] flex items-center justify-center text-slate-950 shadow-lg shadow-[#C9A86A]/20">
+                <Building2 className="w-6 h-6 stroke-[2.2]" />
+              </div>
+              <div>
+                <span className="block text-xl font-bold tracking-wider text-white group-hover:text-amber-300 transition-colors">
+                  HIGHLAND &amp; CO.
+                </span>
+                <span className="block text-[10px] tracking-[0.25em] text-amber-200/70 font-semibold uppercase">
+                  Estates &amp; Lettings • Birmingham
+                </span>
+              </div>
+            </a>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#properties" className="hover:text-gold-light transition text-sm">
-                To Let
-              </a>
-              <a href="#properties" className="hover:text-gold-light transition text-sm">
-                For Sale
-              </a>
-              <a href="#landlord" className="hover:text-gold-light transition text-sm">
-                Landlord Services
-              </a>
-              <a href="#calculator" className="hover:text-gold-light transition text-sm">
-                Valuation
-              </a>
-              <a href="#testimonials" className="hover:text-gold-light transition text-sm">
-                Reviews
-              </a>
-              <a href="#contact" className="hover:text-gold-light transition text-sm">
-                Contact
-              </a>
-            </div>
+            {/* Desktop Navigation Links */}
+            <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-300">
+              <a href="#properties" onClick={() => setFilterType('rent')} className="hover:text-amber-300 transition-colors py-2">To Let</a>
+              <a href="#properties" onClick={() => setFilterType('sale')} className="hover:text-amber-300 transition-colors py-2">For Sale</a>
+              <a href="#landlords" className="hover:text-amber-300 transition-colors py-2">Guaranteed Rent</a>
+              <a href="#calculator" className="hover:text-amber-300 transition-colors py-2">Yield Calculator</a>
+              <a href="#reviews" className="hover:text-amber-300 transition-colors py-2">Client Reviews</a>
+              <a href="#faq" className="hover:text-amber-300 transition-colors py-2">FAQ</a>
+            </nav>
 
-            <div className="hidden md:flex items-center gap-3">
+            {/* Action Buttons */}
+            <div className="hidden sm:flex items-center gap-3">
               <button
-                onClick={() => setShowValuationForm(true)}
-                className="px-4 py-2 bg-gold-light text-oxford-navy font-semibold rounded hover:bg-gold transition text-sm"
+                type="button"
+                onClick={() => handleOpenModal('valuation')}
+                className="px-4 py-2.5 rounded-md border border-amber-300/40 text-amber-200 text-sm font-semibold hover:bg-amber-300/10 hover:border-amber-300 transition-all focus:ring-2 focus:ring-amber-300 focus:outline-none"
               >
-                Landlord Valuation
+                Book Valuation
               </button>
               <button
-                onClick={() => setShowViewingForm(true)}
-                className="px-4 py-2 border border-gold-light text-gold-light font-semibold rounded hover:bg-gold-light/10 transition text-sm"
+                type="button"
+                onClick={() => handleOpenModal('viewing')}
+                className="px-5 py-2.5 rounded-md bg-gradient-to-r from-[#D8B475] to-[#B38D48] text-slate-950 text-sm font-bold shadow-md shadow-[#C9A86A]/25 hover:brightness-110 active:scale-[0.98] transition-all focus:ring-2 focus:ring-amber-300 focus:outline-none"
               >
-                Book Viewing
+                Arrange Viewing
               </button>
             </div>
 
             {/* Mobile Menu Button */}
             <button
+              type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden"
+              className="lg:hidden p-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-amber-300 focus:outline-none"
+              aria-label="Toggle navigation menu"
+              aria-expanded={isMenuOpen}
             >
-              {isMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
+        </div>
 
-          {/* Mobile Menu */}
-          {isMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-gold-light/20 pt-4 space-y-3">
-              <a
-                href="#properties"
-                className="block hover:text-gold-light transition text-sm"
+        {/* Mobile Dropdown */}
+        {isMenuOpen && (
+          <div className="lg:hidden bg-[#0B1528] border-b border-slate-800 px-6 py-6 space-y-4">
+            <nav className="flex flex-col space-y-3 text-base font-medium">
+              <a href="#properties" onClick={() => { setFilterType('rent'); setIsMenuOpen(false); }} className="text-slate-200 hover:text-amber-300 py-1">Properties To Let</a>
+              <a href="#properties" onClick={() => { setFilterType('sale'); setIsMenuOpen(false); }} className="text-slate-200 hover:text-amber-300 py-1">Properties For Sale</a>
+              <a href="#landlords" onClick={() => setIsMenuOpen(false)} className="text-slate-200 hover:text-amber-300 py-1">Landlord Management</a>
+              <a href="#calculator" onClick={() => setIsMenuOpen(false)} className="text-slate-200 hover:text-amber-300 py-1">Rental Yield Calculator</a>
+              <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="text-slate-200 hover:text-amber-300 py-1">Client Reviews</a>
+              <a href="#faq" onClick={() => setIsMenuOpen(false)} className="text-slate-200 hover:text-amber-300 py-1">Lettings FAQ</a>
+            </nav>
+            <div className="pt-4 border-t border-slate-700/60 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => { handleOpenModal('valuation'); setIsMenuOpen(false); }}
+                className="w-full py-3 rounded-md border border-amber-300/40 text-amber-200 text-sm font-semibold hover:bg-amber-300/10 text-center"
               >
-                To Let
-              </a>
-              <a
-                href="#properties"
-                className="block hover:text-gold-light transition text-sm"
+                Free Landlord Valuation
+              </button>
+              <button
+                type="button"
+                onClick={() => { handleOpenModal('viewing'); setIsMenuOpen(false); }}
+                className="w-full py-3 rounded-md bg-[#C9A86A] text-slate-950 text-sm font-bold text-center"
               >
-                For Sale
-              </a>
-              <a
-                href="#landlord"
-                className="block hover:text-gold-light transition text-sm"
-              >
-                Landlord Services
-              </a>
-              <a
-                href="#calculator"
-                className="block hover:text-gold-light transition text-sm"
-              >
-                Valuation
-              </a>
-              <a
-                href="#testimonials"
-                className="block hover:text-gold-light transition text-sm"
-              >
-                Reviews
-              </a>
-              <a
-                href="#contact"
-                className="block hover:text-gold-light transition text-sm"
-              >
-                Contact
-              </a>
-              <div className="flex flex-col gap-2 pt-2">
-                <button
-                  onClick={() => {
-                    setShowValuationForm(true)
-                    setIsMenuOpen(false)
-                  }}
-                  className="w-full px-4 py-2 bg-gold-light text-oxford-navy font-semibold rounded hover:bg-gold transition text-sm"
-                >
-                  Landlord Valuation
-                </button>
-                <button
-                  onClick={() => {
-                    setShowViewingForm(true)
-                    setIsMenuOpen(false)
-                  }}
-                  className="w-full px-4 py-2 border border-gold-light text-gold-light font-semibold rounded hover:bg-gold-light/10 transition text-sm"
-                >
-                  Book Viewing
-                </button>
-              </div>
+                Book a Viewing
+              </button>
             </div>
-          )}
-        </div>
-      </nav>
+          </div>
+        )}
+      </header>
 
-      {/* 3. HERO SECTION */}
-      <section className="relative py-16 md:py-24 px-4 bg-gradient-to-b from-slate-dark to-oxford-navy overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 right-10 w-72 h-72 bg-gold-light rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 left-10 w-96 h-96 bg-gold rounded-full blur-3xl opacity-30"></div>
-        </div>
+      <main>
+        {/* 3. HERO SECTION WITH IMAGE IMPORT #1 */}
+        <section className="relative min-h-[640px] lg:min-h-[720px] flex items-center justify-center overflow-hidden">
+          {/* Background Image Container */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src={heroImg}
+              alt="Luxury Georgian and modern Birmingham architectural developments"
+              className="w-full h-full object-cover object-center filter brightness-[0.38] contrast-[1.08] scale-105 transform animate-pulse duration-1000"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#070D18] via-[#070D18]/70 to-[#070D18]/40" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#070D18]/90 via-transparent to-[#070D18]/90" />
+          </div>
 
-        <div className="max-w-6xl mx-auto relative z-10">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+          <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-16 text-center">
+            {/* Pill Tag */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-amber-400/30 text-amber-200 text-xs sm:text-sm font-medium mb-6 backdrop-blur shadow-sm">
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Birmingham’s Premier High-Yield Property Consultancy</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 max-w-4xl mx-auto leading-[1.15]">
               Exceptional Properties.{' '}
-              <span className="text-gold-light">
-                Unrivalled Birmingham Lettings & Management
+              <span className="bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent">
+                Unrivalled Midlands Lettings &amp; Management.
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Connecting discerning tenants with luxury city apartments and
-              executive family homes across Birmingham and the West Midlands.
-              Full-service property management with 99.4% occupancy rates.
+
+            <p className="text-base sm:text-lg lg:text-xl text-slate-200 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
+              Connecting qualified tenants with luxury city apartments and executive family residences. Delivering <strong>99.4% average occupancy</strong> and certified guaranteed rent for UK landlords.
             </p>
-          </div>
 
-          {/* Quick Search Bar */}
-          <div className="bg-card-bg/80 backdrop-blur border border-gold-light/30 rounded-lg p-6 mb-12">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gold-light">
-                  Type
-                </label>
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full bg-oxford-navy border border-gold-light/30 rounded px-3 py-2 text-white focus:outline-none focus:border-gold-light"
-                >
-                  <option value="rent">To Rent</option>
-                  <option value="sale">For Sale</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gold-light">
-                  Bedrooms
-                </label>
-                <select
-                  value={filterBeds}
-                  onChange={(e) => setFilterBeds(e.target.value)}
-                  className="w-full bg-oxford-navy border border-gold-light/30 rounded px-3 py-2 text-white focus:outline-none focus:border-gold-light"
-                >
-                  <option value="any">Any</option>
-                  <option value="1">1 Bed</option>
-                  <option value="2">2 Beds</option>
-                  <option value="3+">3+ Beds</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gold-light">
-                  Location
-                </label>
-                <select
-                  value={filterLocation}
-                  onChange={(e) => setFilterLocation(e.target.value)}
-                  className="w-full bg-oxford-navy border border-gold-light/30 rounded px-3 py-2 text-white focus:outline-none focus:border-gold-light"
-                >
-                  <option value="all">All Areas</option>
-                  <option value="Jewellery Quarter">Jewellery Quarter</option>
-                  <option value="Edgbaston">Edgbaston</option>
-                  <option value="Mailbox District">Mailbox District</option>
-                  <option value="Digbeth">Digbeth</option>
-                  <option value="Harborne Village">Harborne Village</option>
-                  <option value="Colmore Business District">Colmore District</option>
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2 text-gold-light">
-                  Search
-                </label>
-                <button className="w-full bg-gradient-to-r from-gold to-gold-light text-oxford-navy font-bold py-2 rounded hover:shadow-lg hover:shadow-gold/50 transition flex items-center justify-center gap-2">
-                  <Search className="w-4 h-4" />
-                  Search Properties
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Trust Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card-bg/60 border border-gold-light/20 rounded-lg p-4 text-center">
-              <Shield className="w-6 h-6 text-gold-light mx-auto mb-2" />
-              <p className="text-sm font-semibold">ARLA Propertymark Protected</p>
-            </div>
-            <div className="bg-card-bg/60 border border-gold-light/20 rounded-lg p-4 text-center">
-              <CheckCircle2 className="w-6 h-6 text-gold-light mx-auto mb-2" />
-              <p className="text-sm font-semibold">The Property Ombudsman (TPO)</p>
-            </div>
-            <div className="bg-card-bg/60 border border-gold-light/20 rounded-lg p-4 text-center">
-              <Lock className="w-6 h-6 text-gold-light mx-auto mb-2" />
-              <p className="text-sm font-semibold">SafeAgent Accredited</p>
-            </div>
-            <div className="bg-card-bg/60 border border-gold-light/20 rounded-lg p-4 text-center">
-              <Star className="w-6 h-6 text-gold-light mx-auto mb-2" />
-              <p className="text-sm font-semibold">5.0★ Google (160+ Reviews)</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. FEATURED PROPERTY SHOWCASE */}
-      <section id="properties" className="py-16 md:py-24 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Featured Properties
-            </h2>
-            <p className="text-gray-400 text-lg">
-              Discover our curated selection of premium lettings and sales
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((prop) => (
-              <div
-                key={prop.id}
-                className="bg-card-bg border border-gold-light/20 rounded-lg overflow-hidden hover:border-gold-light/60 transition group"
-              >
-                {/* Property Image Placeholder */}
-                <div className="relative h-48 bg-gradient-to-br from-gold-light/20 to-gold/20 overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Home className="w-24 h-24 text-gold-light/30" />
-                  </div>
-
-                  {prop.badge && (
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-gold-light text-oxford-navy text-xs font-bold px-3 py-1 rounded-full">
-                        {prop.badge}
-                      </span>
-                    </div>
-                  )}
-
-                  {prop.type === 'rent' && (
-                    <button className="absolute top-4 left-4 bg-oxford-navy/80 backdrop-blur p-2 rounded hover:bg-gold-light hover:text-oxford-navy transition">
-                      <Heart className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Property Details */}
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-gold-light">
-                    {prop.title}
-                  </h3>
-
-                  <div className="flex items-center text-gray-400 mb-4">
-                    <MapPin className="w-4 h-4 mr-2 text-gold-light" />
-                    {prop.location}
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    <div className="flex items-center">
-                      <Bed className="w-4 h-4 text-gold-light mr-2" />
-                      <span className="text-sm">{prop.beds} Bed{prop.beds > 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Bath className="w-4 h-4 text-gold-light mr-2" />
-                      <span className="text-sm">{prop.baths} Bath{prop.baths > 1 ? 's' : ''}</span>
-                    </div>
-                    {prop.parking && (
-                      <div className="flex items-center">
-                        <ParkingCircle className="w-4 h-4 text-gold-light mr-2" />
-                        <span className="text-sm">Parking</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <p className="text-gray-300 text-sm mb-4">{prop.description}</p>
-
-                  <div className="mb-4 pb-4 border-t border-gold-light/20">
-                    <p className="text-2xl font-bold text-gold-light">
-                      {prop.type === 'rent' ? `£${prop.price}` : `£${prop.price.toLocaleString()}`}
-                      {prop.type === 'rent' && <span className="text-sm text-gray-400">/pcm</span>}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => setShowViewingForm(true)}
-                    className="w-full bg-gradient-to-r from-gold to-gold-light text-oxford-navy font-bold py-2 rounded hover:shadow-lg hover:shadow-gold/50 transition flex items-center justify-center gap-2"
-                  >
-                    Arrange Viewing
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredProperties.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">
-                No properties match your filters. Try adjusting your search.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 5. LANDLORD MANAGEMENT TIERS */}
-      <section id="landlord" className="py-16 md:py-24 px-4 bg-oxford-navy/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Landlord Management Services
-            </h2>
-            <p className="text-gray-400 text-lg">
-              Choose the service level that's right for your property portfolio
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Tenant Find Only */}
-            <div className="bg-card-bg border border-gold-light/20 rounded-lg p-8 hover:border-gold-light/60 transition">
-              <h3 className="text-2xl font-bold mb-2 text-gold-light">
-                Tenant Find Only
-              </h3>
-              <p className="text-3xl font-bold mb-6 text-gold-light">8%</p>
-              <p className="text-gray-400 text-sm mb-6">One-off fee</p>
-
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Rigorous tenant vetting</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Professional tenancy agreements</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Deposit protection</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Move-in inspection</span>
-                </li>
-              </ul>
-
-              <button className="w-full bg-card-bg border border-gold-light text-gold-light font-semibold py-2 rounded hover:bg-gold-light hover:text-oxford-navy transition">
-                Learn More
-              </button>
-            </div>
-
-            {/* Fully Managed */}
-            <div className="bg-gradient-to-br from-gold-light/10 to-gold/10 border-2 border-gold-light rounded-lg p-8 relative">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-gold-light text-oxford-navy text-xs font-bold px-4 py-1 rounded-full">
-                  MOST POPULAR
-                </span>
-              </div>
-
-              <h3 className="text-2xl font-bold mb-2 text-gold-light">
-                Fully Managed
-              </h3>
-              <p className="text-3xl font-bold mb-6 text-gold-light">12%</p>
-              <p className="text-gray-400 text-sm mb-6">Monthly fee</p>
-
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Tenant Find Only services</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">24/7 maintenance coordination</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Rent collection & insurance</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Regular inspections & compliance</span>
-                </li>
-              </ul>
-
-              <button className="w-full bg-gold-light text-oxford-navy font-bold py-2 rounded hover:bg-gold transition">
-                Choose Fully Managed
-              </button>
-            </div>
-
-            {/* Guaranteed Rent */}
-            <div className="bg-card-bg border border-gold-light/20 rounded-lg p-8 hover:border-gold-light/60 transition">
-              <h3 className="text-2xl font-bold mb-2 text-gold-light">
-                Guaranteed Rent Scheme
-              </h3>
-              <p className="text-3xl font-bold mb-6 text-gold-light">Fixed</p>
-              <p className="text-gray-400 text-sm mb-6">Monthly income guaranteed</p>
-
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">0% void periods</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Guaranteed monthly payments</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Full management included</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-gold-light flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Peace of mind with stability</span>
-                </li>
-              </ul>
-
-              <button className="w-full bg-card-bg border border-gold-light text-gold-light font-semibold py-2 rounded hover:bg-gold-light hover:text-oxford-navy transition">
-                Learn More
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. INSTANT RENTAL YIELD CALCULATOR */}
-      <section id="calculator" className="py-16 md:py-24 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Instant Rental Yield Calculator
-            </h2>
-            <p className="text-gray-400 text-lg">
-              Discover your property's earning potential
-            </p>
-          </div>
-
-          <div className="bg-card-bg border border-gold-light/20 rounded-lg p-8">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gold-light">
-                  Property Location
-                </label>
-                <select
-                  value={calculatorLocation}
-                  onChange={(e) => setCalculatorLocation(e.target.value)}
-                  className="w-full bg-oxford-navy border border-gold-light/30 rounded px-4 py-2 text-white focus:outline-none focus:border-gold-light"
-                >
-                  <option value="jewellery">Jewellery Quarter</option>
-                  <option value="edgbaston">Edgbaston</option>
-                  <option value="citycore">City Core</option>
-                  <option value="digbeth">Digbeth</option>
-                  <option value="solihull">Solihull</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gold-light">
-                  Number of Bedrooms
-                </label>
-                <select
-                  value={calculatorBeds}
-                  onChange={(e) => setCalculatorBeds(e.target.value)}
-                  className="w-full bg-oxford-navy border border-gold-light/30 rounded px-4 py-2 text-white focus:outline-none focus:border-gold-light"
-                >
-                  <option value="1">1 Bedroom</option>
-                  <option value="2">2 Bedrooms</option>
-                  <option value="3">3 Bedrooms</option>
-                  <option value="4">4+ Bedrooms</option>
-                </select>
-              </div>
-
-              <button
-                onClick={handleCalculateYield}
-                className="w-full bg-gradient-to-r from-gold to-gold-light text-oxford-navy font-bold py-3 rounded hover:shadow-lg hover:shadow-gold/50 transition flex items-center justify-center gap-2"
-              >
-                <TrendingUp className="w-5 h-5" />
-                Calculate Estimated Yield
-              </button>
-
-              {calculatorYield && (
-                <div className="bg-oxford-navy rounded-lg p-6 border border-gold-light/30 text-center">
-                  <p className="text-gray-400 text-sm mb-2">
-                    Estimated Annual Rental Yield
-                  </p>
-                  <p className="text-4xl font-bold text-gold-light mb-4">
-                    {calculatorYield.toFixed(1)}%
-                  </p>
-                  <p className="text-gray-400 text-sm mb-6">
-                    Based on current market rates for {calculatorBeds}-bed properties
-                    in {calculatorLocation === 'jewellery' ? 'Jewellery Quarter' : calculatorLocation === 'edgbaston' ? 'Edgbaston' : 'your selected area'}
-                  </p>
-                  <button
-                    onClick={() => setShowValuationForm(true)}
-                    className="w-full bg-card-bg border border-gold-light text-gold-light font-semibold py-2 rounded hover:bg-gold-light hover:text-oxford-navy transition"
-                  >
-                    Book In-Person Valuation
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. CLIENT TESTIMONIALS */}
-      <section id="testimonials" className="py-16 md:py-24 px-4 bg-oxford-navy/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Trusted by Landlords & Tenants
-            </h2>
-            <p className="text-gray-400 text-lg">
-              Real reviews from real clients
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-card-bg border border-gold-light/20 rounded-lg p-8">
-              <div className="flex items-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 fill-gold-light text-gold-light"
-                  />
-                ))}
-              </div>
-              <p className="text-gray-300 mb-6">
-                "We've managed 4 buy-to-let flats through Highland & Co. for 8 years.
-                The guaranteed rent scheme gave us complete peace of mind. Highly
-                professional team."
-              </p>
-              <p className="font-bold text-gold-light">James Patterson</p>
-              <p className="text-sm text-gray-400">Landlord, 4 Properties Birmingham</p>
-            </div>
-
-            <div className="bg-card-bg border border-gold-light/20 rounded-lg p-8">
-              <div className="flex items-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 fill-gold-light text-gold-light"
-                  />
-                ))}
-              </div>
-              <p className="text-gray-300 mb-6">
-                "When I relocated to Birmingham for HSBC, Highland & Co. found me the
-                perfect apartment within days. Their tenant service is exceptional and
-                responsive."
-              </p>
-              <p className="font-bold text-gold-light">Sarah Mitchell</p>
-              <p className="text-sm text-gray-400">Professional Tenant, Tenant Since 2022</p>
-            </div>
-
-            <div className="bg-card-bg border border-gold-light/20 rounded-lg p-8">
-              <div className="flex items-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 fill-gold-light text-gold-light"
-                  />
-                ))}
-              </div>
-              <p className="text-gray-300 mb-6">
-                "As a London-based property investor, I needed reliable partners in
-                Birmingham. Highland & Co. delivers institutional-grade service at
-                independent agency rates."
-              </p>
-              <p className="font-bold text-gold-light">Michael Zhang</p>
-              <p className="text-sm text-gray-400">Property Investor, London & Birmingham</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. BOOK VIEWING / VALUATION FORM */}
-      {(showViewingForm || showValuationForm) && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur z-50 flex items-center justify-center p-4">
-          <div className="bg-card-bg border border-gold-light/30 rounded-lg max-w-md w-full p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gold-light">
-                {showValuationForm ? 'Landlord Valuation' : 'Book a Viewing'}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowViewingForm(false)
-                  setShowValuationForm(false)
-                  setViewingSubmitted(false)
-                }}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {!viewingSubmitted ? (
-              <form onSubmit={handleViewingSubmit} className="space-y-4">
+            {/* Quick Filter Box */}
+            <div className="max-w-4xl mx-auto bg-slate-900/85 backdrop-blur-xl border border-amber-300/30 rounded-2xl p-4 sm:p-6 shadow-2xl shadow-black/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+                {/* Type */}
                 <div>
-                  <label className="block text-sm font-semibold mb-1 text-gold-light">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={viewingFormData.name}
-                    onChange={(e) =>
-                      setViewingFormData({ ...viewingFormData, name: e.target.value })
-                    }
-                    className="w-full bg-oxford-navy border border-gold-light/30 rounded px-4 py-2 text-white focus:outline-none focus:border-gold-light"
-                    placeholder="Your name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-gold-light">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={viewingFormData.email}
-                    onChange={(e) =>
-                      setViewingFormData({ ...viewingFormData, email: e.target.value })
-                    }
-                    className="w-full bg-oxford-navy border border-gold-light/30 rounded px-4 py-2 text-white focus:outline-none focus:border-gold-light"
-                    placeholder="your@email.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-gold-light">
-                    Mobile Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={viewingFormData.mobile}
-                    onChange={(e) =>
-                      setViewingFormData({ ...viewingFormData, mobile: e.target.value })
-                    }
-                    className="w-full bg-oxford-navy border border-gold-light/30 rounded px-4 py-2 text-white focus:outline-none focus:border-gold-light"
-                    placeholder="0121 496 0880"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-gold-light">
-                    Interested In
+                  <label htmlFor="filter-type" className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-1.5">
+                    Property Type
                   </label>
                   <select
-                    value={viewingFormData.interestedIn}
-                    onChange={(e) =>
-                      setViewingFormData({ ...viewingFormData, interestedIn: e.target.value })
-                    }
-                    className="w-full bg-oxford-navy border border-gold-light/30 rounded px-4 py-2 text-white focus:outline-none focus:border-gold-light"
+                    id="filter-type"
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="w-full bg-[#0E1726] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:border-amber-400 focus:outline-none"
                   >
-                    <option value="viewing">Property Viewing</option>
-                    <option value="letting">Letting My Property</option>
-                    <option value="selling">Selling My Property</option>
+                    <option value="rent">To Rent (PCM)</option>
+                    <option value="sale">For Sale (Freehold / Leasehold)</option>
                   </select>
                 </div>
 
+                {/* Beds */}
                 <div>
-                  <label className="block text-sm font-semibold mb-1 text-gold-light">
-                    Preferred Date
+                  <label htmlFor="filter-beds" className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-1.5">
+                    Bedrooms
                   </label>
-                  <input
-                    type="date"
-                    value={viewingFormData.date}
-                    onChange={(e) =>
-                      setViewingFormData({ ...viewingFormData, date: e.target.value })
-                    }
-                    className="w-full bg-oxford-navy border border-gold-light/30 rounded px-4 py-2 text-white focus:outline-none focus:border-gold-light"
+                  <select
+                    id="filter-beds"
+                    value={filterBeds}
+                    onChange={(e) => setFilterBeds(e.target.value)}
+                    className="w-full bg-[#0E1726] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:border-amber-400 focus:outline-none"
+                  >
+                    <option value="any">Any Bedrooms</option>
+                    <option value="1">1 Bedroom</option>
+                    <option value="2">2 Bedrooms</option>
+                    <option value="3+">3+ Bedrooms</option>
+                  </select>
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label htmlFor="filter-loc" className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-1.5">
+                    Location
+                  </label>
+                  <select
+                    id="filter-loc"
+                    value={filterLocation}
+                    onChange={(e) => setFilterLocation(e.target.value)}
+                    className="w-full bg-[#0E1726] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:border-amber-400 focus:outline-none"
+                  >
+                    <option value="all">All Birmingham Districts</option>
+                    <option value="Jewellery Quarter">Jewellery Quarter (B1/B3)</option>
+                    <option value="Edgbaston">Edgbaston (B15)</option>
+                    <option value="Mailbox District">Mailbox &amp; Canal Basin (B1)</option>
+                    <option value="Colmore">Colmore Business District (B3)</option>
+                  </select>
+                </div>
+
+                {/* Search Button */}
+                <div className="flex items-end">
+                  <a
+                    href="#properties"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#D8B475] to-[#B38D48] text-slate-950 font-bold py-2.5 px-4 rounded-lg shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm h-[42px]"
+                  >
+                    <Search className="w-4 h-4 stroke-[2.5]" />
+                    <span>Search Listings</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Accreditations Trust Badges */}
+            <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto">
+              <div className="bg-[#0B1528]/80 border border-slate-800 rounded-xl p-3.5 text-center backdrop-blur">
+                <Shield className="w-5 h-5 text-amber-300 mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-white">ARLA Propertymark</p>
+                <p className="text-[10px] text-slate-400">Client Money Protected</p>
+              </div>
+
+              <div className="bg-[#0B1528]/80 border border-slate-800 rounded-xl p-3.5 text-center backdrop-blur">
+                <CheckCircle2 className="w-5 h-5 text-amber-300 mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-white">The Property Ombudsman</p>
+                <p className="text-[10px] text-slate-400">Approved Redress Scheme</p>
+              </div>
+
+              <div className="bg-[#0B1528]/80 border border-slate-800 rounded-xl p-3.5 text-center backdrop-blur">
+                <Lock className="w-5 h-5 text-amber-300 mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-white">TDS Protection</p>
+                <p className="text-[10px] text-slate-400">Government Registered</p>
+              </div>
+
+              <div className="bg-[#0B1528]/80 border border-slate-800 rounded-xl p-3.5 text-center backdrop-blur">
+                <Star className="w-5 h-5 fill-amber-300 text-amber-300 mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-white">4.9 / 5.0 Star Rated</p>
+                <p className="text-[10px] text-slate-400">160+ Verified Google Reviews</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. FEATURED PROPERTY SHOWCASE WITH IMAGE IMPORTS #2, #3, #4 */}
+        <section id="properties" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+            <div>
+              <span className="text-xs uppercase tracking-widest text-amber-300 font-bold">Birmingham Prime Portfolio</span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mt-1">
+                Featured {filterType === 'rent' ? 'Lettings (To Let)' : 'Sales Properties'}
+              </h2>
+            </div>
+            <div className="mt-4 md:mt-0 flex items-center gap-2 bg-slate-900 border border-slate-800 p-1.5 rounded-lg self-start">
+              <button
+                type="button"
+                onClick={() => setFilterType('rent')}
+                className={`px-4 py-1.5 rounded text-xs font-semibold transition-all ${
+                  filterType === 'rent' ? 'bg-[#C9A86A] text-slate-950 shadow' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                To Let
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterType('sale')}
+                className={`px-4 py-1.5 rounded text-xs font-semibold transition-all ${
+                  filterType === 'sale' ? 'bg-[#C9A86A] text-slate-950 shadow' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                For Sale
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredProperties.map((prop) => (
+              <article
+                key={prop.id}
+                className="bg-[#0D1829] border border-slate-800 hover:border-amber-400/40 rounded-2xl overflow-hidden shadow-xl transition-all duration-300 group flex flex-col justify-between"
+              >
+                <div>
+                  {/* Photo Container */}
+                  <div className="relative h-60 w-full overflow-hidden bg-slate-950">
+                    <img
+                      src={prop.image}
+                      alt={`${prop.title} situated in ${prop.location}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20" />
+
+                    {/* Top Badges */}
+                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                      <span className="bg-amber-400 text-slate-950 text-[11px] font-extrabold uppercase px-3 py-1 rounded-full shadow-md">
+                        {prop.badge}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleSave(prop.id)}
+                        aria-label={`Save ${prop.title} to favourites`}
+                        className="w-9 h-9 rounded-full bg-slate-900/80 backdrop-blur text-white flex items-center justify-center hover:text-red-400 transition-colors"
+                      >
+                        <Heart className={`w-4 h-4 ${savedProps.includes(prop.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                      </button>
+                    </div>
+
+                    {/* Statutory UK Badges (EPC & Council Tax) */}
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2 text-[10px] font-semibold">
+                      <span className="px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/40">
+                        {prop.epc}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-slate-900/90 text-slate-200 border border-slate-700">
+                        {prop.councilTax}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="p-6">
+                    <div className="flex items-center text-xs text-amber-200/80 mb-1.5 font-medium">
+                      <MapPin className="w-3.5 h-3.5 mr-1 text-amber-400" />
+                      <span>{prop.location} ({prop.postcode})</span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-white group-hover:text-amber-300 transition-colors mb-3">
+                      {prop.title}
+                    </h3>
+
+                    <div className="flex items-center gap-4 text-xs text-slate-300 py-3 my-2 border-y border-slate-800">
+                      <div className="flex items-center gap-1.5">
+                        <Bed className="w-4 h-4 text-amber-400" />
+                        <span>{prop.beds} Beds</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Bath className="w-4 h-4 text-amber-400" />
+                        <span>{prop.baths} Baths</span>
+                      </div>
+                      {prop.parking && (
+                        <div className="flex items-center gap-1.5">
+                          <ParkingCircle className="w-4 h-4 text-amber-400" />
+                          <span>Parking</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-sm text-slate-300 line-clamp-2 leading-relaxed">
+                      {prop.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer and Price */}
+                <div className="p-6 pt-0">
+                  <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] uppercase tracking-wider text-slate-400 block font-medium">Monthly Rent</span>
+                      <span className="text-2xl font-black text-amber-300">
+                        £{prop.price.toLocaleString()}
+                        <span className="text-xs text-slate-400 font-normal"> pcm</span>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenModal('viewing')}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-200 text-xs font-bold hover:bg-amber-400 hover:text-slate-950 transition-all"
+                    >
+                      Book Tour
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* 5. GUARANTEED RENT & LANDLORD MANAGEMENT TIERS */}
+        <section id="landlords" className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0B1528] border-y border-slate-800">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <span className="text-xs uppercase tracking-widest text-amber-300 font-bold">Landlord Services</span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mt-1">Institutional Care for Private Portfolios</h2>
+              <p className="text-slate-300 text-sm mt-3 leading-relaxed">
+                Whether you prefer passive hands-off income or bespoke tenant matching, our Birmingham team delivers complete legislative compliance.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Tenant Find */}
+              <div className="bg-[#070D18] border border-slate-800 rounded-2xl p-7 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Tenant Find Only</h3>
+                  <div className="mt-3 mb-6">
+                    <span className="text-3xl font-black text-amber-300">8%</span>
+                    <span className="text-xs text-slate-400 ml-1">+ VAT one-off</span>
+                  </div>
+                  <ul className="space-y-3 text-xs text-slate-300 mb-8">
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Full Right-to-Rent &amp; Experian credit referencing</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Drafting compliant UK AST contracts</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>TDS Government deposit protection registration</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Photographic schedule of condition at move-in</span>
+                    </li>
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenModal('valuation')}
+                  className="w-full py-2.5 rounded-lg border border-amber-400/40 text-amber-200 text-xs font-bold hover:bg-amber-400/10 transition-colors"
+                >
+                  Select Tenant Find
+                </button>
+              </div>
+
+              {/* Fully Managed */}
+              <div className="bg-[#070D18] border-2 border-amber-400 rounded-2xl p-7 relative shadow-2xl shadow-amber-400/10 flex flex-col justify-between">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider shadow">
+                  Most Popular
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Fully Managed</h3>
+                  <div className="mt-3 mb-6">
+                    <span className="text-3xl font-black text-amber-300">12%</span>
+                    <span className="text-xs text-slate-400 ml-1">+ VAT monthly</span>
+                  </div>
+                  <ul className="space-y-3 text-xs text-slate-300 mb-8">
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Everything in Tenant Find</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>24/7 UK emergency repair and maintenance coordination</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Automated rent collection &amp; monthly statements</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Gas Safe, EICR &amp; EPC statutory renewals</span>
+                    </li>
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenModal('valuation')}
+                  className="w-full py-2.5 rounded-lg bg-gradient-to-r from-[#D8B475] to-[#B38D48] text-slate-950 text-xs font-extrabold hover:brightness-110 shadow transition-all"
+                >
+                  Choose Fully Managed
+                </button>
+              </div>
+
+              {/* Guaranteed Rent */}
+              <div className="bg-[#070D18] border border-slate-800 rounded-2xl p-7 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Guaranteed Rent</h3>
+                  <div className="mt-3 mb-6">
+                    <span className="text-3xl font-black text-amber-300">Fixed</span>
+                    <span className="text-xs text-slate-400 ml-1">Paid on the 1st of every month</span>
+                  </div>
+                  <ul className="space-y-3 text-xs text-slate-300 mb-8">
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>0% void periods</strong> — no loss of earnings</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Paid even if tenant defaults or vacates</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>Zero agency commission or management deductions</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span>1 to 5 year guaranteed company leases</span>
+                    </li>
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenModal('valuation')}
+                  className="w-full py-2.5 rounded-lg border border-amber-400/40 text-amber-200 text-xs font-bold hover:bg-amber-400/10 transition-colors"
+                >
+                  Get Guaranteed Offer
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. INSTANT GROSS RENTAL YIELD CALCULATOR */}
+        <section id="calculator" className="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+          <div className="bg-gradient-to-b from-[#0D1829] to-[#070D18] border border-amber-400/30 rounded-3xl p-8 sm:p-12 shadow-2xl">
+            <div className="text-center max-w-xl mx-auto mb-8">
+              <span className="text-xs uppercase tracking-widest text-amber-300 font-bold">Investment Benchmarks</span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mt-1">Birmingham Rental Yield Calculator</h2>
+              <p className="text-slate-300 text-xs sm:text-sm mt-2">
+                Estimate expected gross yields across Birmingham submarkets based on live quarterly metrics.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+              <div>
+                <label htmlFor="calc-area" className="block text-xs font-semibold text-slate-200 mb-2">
+                  Select Birmingham Postcode / Area
+                </label>
+                <select
+                  id="calc-area"
+                  value={calculatorLocation}
+                  onChange={(e) => setCalculatorLocation(e.target.value)}
+                  className="w-full bg-[#070D18] border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:border-amber-400 focus:outline-none"
+                >
+                  <option value="jewellery">Jewellery Quarter &amp; St. Paul’s (B3)</option>
+                  <option value="edgbaston">Edgbaston &amp; Harborne (B15/B17)</option>
+                  <option value="citycore">Colmore &amp; City Core (B2/B3)</option>
+                  <option value="digbeth">Digbeth Creative Quarter (B5)</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="calc-bedroom-count" className="block text-xs font-semibold text-slate-200 mb-2">
+                  Property Configuration
+                </label>
+                <select
+                  id="calc-bedroom-count"
+                  value={calculatorBeds}
+                  onChange={(e) => setCalculatorBeds(e.target.value)}
+                  className="w-full bg-[#070D18] border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:border-amber-400 focus:outline-none"
+                >
+                  <option value="1">1 Bed Luxury Flat</option>
+                  <option value="2">2 Bed Modern Apartment</option>
+                  <option value="3">3 Bed Townhouse</option>
+                  <option value="4">4+ Bed Executive Detached</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCalculateYield}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#D8B475] to-[#B38D48] text-slate-950 font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.99] transition-all"
+            >
+              <TrendingUp className="w-4 h-4 stroke-[2.5]" />
+              <span>Calculate Gross Annual Yield</span>
+            </button>
+
+            {calculatorYield && (
+              <div className="mt-8 p-6 bg-[#070D18] border border-amber-400/40 rounded-2xl text-center animate-fadeIn">
+                <span className="text-xs uppercase tracking-wider text-slate-400 block font-medium">Estimated Gross Yield</span>
+                <span className="text-4xl sm:text-5xl font-extrabold text-amber-300 my-2 block">
+                  {calculatorYield.toFixed(1)}%
+                </span>
+                <p className="text-xs text-slate-300 max-w-md mx-auto mb-4">
+                  Based on recent AST tenancy registrations in this submarket. Individual property condition and finish may achieve higher premiums.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleOpenModal('valuation')}
+                  className="text-xs font-bold text-amber-300 hover:text-white underline underline-offset-4"
+                >
+                  Request a Formal Portfolio Rental Appraisal →
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 7. CLIENT TESTIMONIALS */}
+        <section id="reviews" className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0B1528] border-t border-slate-800">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <span className="text-xs uppercase tracking-widest text-amber-300 font-bold">Client Reputation</span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mt-1">Endorsed by Midlands Landlords</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-[#070D18] border border-slate-800 p-6 rounded-2xl">
+                <div className="flex items-center gap-1 text-amber-400 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-sm text-slate-300 italic mb-6 leading-relaxed">
+                  "Highland &amp; Co. has managed my 4 buy-to-let apartments in the Jewellery Quarter since 2018. Their Guaranteed Rent scheme has never missed a single month. Absolute professionals."
+                </p>
+                <div>
+                  <h4 className="text-sm font-bold text-white">James Patterson</h4>
+                  <p className="text-xs text-amber-200/70">Portfolio Landlord • Birmingham</p>
+                </div>
+              </div>
+
+              <div className="bg-[#070D18] border border-slate-800 p-6 rounded-2xl">
+                <div className="flex items-center gap-1 text-amber-400 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-sm text-slate-300 italic mb-6 leading-relaxed">
+                  "When relocating our corporate executives from London to HSBC's Birmingham headquarters, Highland &amp; Co secured three outstanding properties within 48 hours. Stellar service."
+                </p>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Sarah Mitchell</h4>
+                  <p className="text-xs text-amber-200/70">Corporate Relocation Client</p>
+                </div>
+              </div>
+
+              <div className="bg-[#070D18] border border-slate-800 p-6 rounded-2xl">
+                <div className="flex items-center gap-1 text-amber-400 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-sm text-slate-300 italic mb-6 leading-relaxed">
+                  "Hands down the most transparent independent agency in the West Midlands. Their AST paperwork and digital inventories protect both landlord and tenant to the highest standard."
+                </p>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Michael Zhang</h4>
+                  <p className="text-xs text-amber-200/70">Overseas Investor • London &amp; HK</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 8. FREQUENTLY ASKED QUESTIONS ACCORDION */}
+        <section id="faq" className="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-xs uppercase tracking-widest text-amber-300 font-bold">Clear Guidance</span>
+            <h2 className="text-3xl font-bold text-white mt-1">UK Lettings &amp; Management FAQ</h2>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, idx) => (
+              <div
+                key={idx}
+                className="bg-[#0D1829] border border-slate-800 rounded-xl overflow-hidden transition-colors"
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
+                  className="w-full px-6 py-4 flex items-center justify-between text-left text-sm font-bold text-white hover:text-amber-300 focus:outline-none"
+                  aria-expanded={expandedFaq === idx}
+                >
+                  <span className="pr-4">{faq.q}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-amber-400 shrink-0 transition-transform duration-300 ${
+                      expandedFaq === idx ? 'rotate-180' : ''
+                    }`}
                   />
+                </button>
+                {expandedFaq === idx && (
+                  <div className="px-6 pb-5 pt-1 text-xs text-slate-300 border-t border-slate-800/60 leading-relaxed">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      {/* 9. STATUTORY FOOTER */}
+      <footer id="contact" className="bg-[#050912] border-t border-slate-800 text-slate-400 text-xs py-14 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+          {/* Col 1 */}
+          <div>
+            <div className="flex items-center gap-2 mb-4 text-white font-bold text-base">
+              <Building2 className="w-5 h-5 text-amber-400" />
+              <span>HIGHLAND &amp; CO.</span>
+            </div>
+            <p className="leading-relaxed mb-4 text-slate-300">
+              Premier independent estate agency and residential asset managers serving Birmingham City Centre, Edgbaston, Solihull, and the West Midlands.
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Company Reg: 12345678 • Registered in England &amp; Wales
+            </p>
+          </div>
+
+          {/* Col 2 */}
+          <div>
+            <h4 className="text-white font-bold text-sm mb-4">Colmore Row Headquarters</h4>
+            <address className="not-italic space-y-2.5">
+              <p className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>Colmore Row, Birmingham, West Midlands, B3 2BJ</span>
+              </p>
+              <p className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-amber-400 shrink-0" />
+                <a href="tel:01214960880" className="hover:text-amber-300">0121 496 0880</a>
+              </p>
+              <p className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-amber-400 shrink-0" />
+                <a href="mailto:enquiries@highlandco.co.uk" className="hover:text-amber-300">enquiries@highlandco.co.uk</a>
+              </p>
+            </address>
+          </div>
+
+          {/* Col 3 */}
+          <div>
+            <h4 className="text-white font-bold text-sm mb-4">Quick Links</h4>
+            <ul className="space-y-2">
+              <li><a href="#properties" onClick={() => setFilterType('rent')} className="hover:text-amber-300">Properties To Let</a></li>
+              <li><a href="#properties" onClick={() => setFilterType('sale')} className="hover:text-amber-300">Properties For Sale</a></li>
+              <li><a href="#landlords" className="hover:text-amber-300">Guaranteed Rent Scheme</a></li>
+              <li><a href="#calculator" className="hover:text-amber-300">Rental Yield Calculator</a></li>
+              <li><a href="#faq" className="hover:text-amber-300">UK Tenancy Regulations</a></li>
+            </ul>
+          </div>
+
+          {/* Col 4 */}
+          <div>
+            <h4 className="text-white font-bold text-sm mb-4">Accredited Regulation</h4>
+            <p className="mb-4 leading-relaxed">
+              We operate under strict codes of practice approved by statutory regulators. All client monies are held in segregated, ring-fenced accounts.
+            </p>
+            <div className="flex flex-wrap gap-2 text-[10px] font-bold text-amber-200">
+              <span className="px-2 py-1 bg-slate-900 border border-slate-800 rounded">ARLA Propertymark</span>
+              <span className="px-2 py-1 bg-slate-900 border border-slate-800 rounded">TPO Registered</span>
+              <span className="px-2 py-1 bg-slate-900 border border-slate-800 rounded">TDS Custodial</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="max-w-7xl mx-auto pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
+          <p>© {new Date().getFullYear()} Highland &amp; Co. Estate &amp; Lettings Agents Ltd. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <a href="#" className="hover:text-amber-300">Privacy Notice</a>
+            <a href="#" className="hover:text-amber-300">Terms of Tenancy</a>
+            <a href="#" className="hover:text-amber-300">CMP Certificate</a>
+            <a href="#" className="hover:text-amber-300">Complaints Procedure</a>
+          </div>
+        </div>
+      </footer>
+
+      {/* 10. MODAL: VIEWING / VALUATION FORM */}
+      {showViewingModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0D1829] border border-amber-400/40 rounded-2xl w-full max-w-lg p-6 sm:p-8 relative shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setShowViewingModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              aria-label="Close form"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {!formSubmitted ? (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-bold text-white">
+                    {modalType === 'valuation' ? 'Book a Free Landlord Valuation' : 'Arrange an In-Person Viewing'}
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Direct from our Colmore Row Birmingham Office.
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-1 text-gold-light">
-                    Message
+                  <label htmlFor="modal-name" className="block text-xs font-semibold text-slate-200 mb-1">
+                    Your Full Name *
+                  </label>
+                  <input
+                    id="modal-name"
+                    required
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-[#070D18] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:border-amber-400 focus:outline-none"
+                    placeholder="e.g. Eleanor Vance"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="modal-email" className="block text-xs font-semibold text-slate-200 mb-1">
+                      Email Address *
+                    </label>
+                    <input
+                      id="modal-email"
+                      required
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full bg-[#070D18] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:border-amber-400 focus:outline-none"
+                      placeholder="eleanor@example.co.uk"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="modal-phone" className="block text-xs font-semibold text-slate-200 mb-1">
+                      UK Telephone Number *
+                    </label>
+                    <input
+                      id="modal-phone"
+                      required
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full bg-[#070D18] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:border-amber-400 focus:outline-none"
+                      placeholder="07123 456789"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="modal-service" className="block text-xs font-semibold text-slate-200 mb-1">
+                      Service Required
+                    </label>
+                    <select
+                      id="modal-service"
+                      value={formData.service}
+                      onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                      className="w-full bg-[#070D18] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:border-amber-400 focus:outline-none"
+                    >
+                      <option value="Property Viewing">Property Viewing</option>
+                      <option value="Landlord Valuation">Landlord Valuation</option>
+                      <option value="Guaranteed Rent Quote">Guaranteed Rent Quote</option>
+                      <option value="Sales Valuation">Sales Valuation</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="modal-date" className="block text-xs font-semibold text-slate-200 mb-1">
+                      Preferred Date
+                    </label>
+                    <input
+                      id="modal-date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      className="w-full bg-[#070D18] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white text-sm focus:border-amber-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="modal-notes" className="block text-xs font-semibold text-slate-200 mb-1">
+                    Specific Requirements or Property Address
                   </label>
                   <textarea
-                    value={viewingFormData.message}
-                    onChange={(e) =>
-                      setViewingFormData({ ...viewingFormData, message: e.target.value })
-                    }
-                    className="w-full bg-oxford-navy border border-gold-light/30 rounded px-4 py-2 text-white focus:outline-none focus:border-gold-light h-24 resize-none"
-                    placeholder="Additional details..."
+                    id="modal-notes"
+                    rows={2}
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    className="w-full bg-[#070D18] border border-slate-700 rounded-lg px-3.5 py-2 text-white text-sm focus:border-amber-400 focus:outline-none resize-none"
+                    placeholder="Details about your property portfolio or preferred move-in timeline..."
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-gold to-gold-light text-oxford-navy font-bold py-2 rounded hover:shadow-lg hover:shadow-gold/50 transition"
+                  className="w-full py-3 rounded-lg bg-gradient-to-r from-[#D8B475] to-[#B38D48] text-slate-950 font-bold text-sm hover:brightness-110 active:scale-[0.99] transition-all"
                 >
-                  Submit Request
+                  Confirm Appointment Request
                 </button>
               </form>
             ) : (
-              <div className="text-center py-8">
-                <CheckCircle2 className="w-16 h-16 text-gold-light mx-auto mb-4" />
-                <p className="text-xl font-bold mb-2">Request Confirmed!</p>
-                <p className="text-gray-400">
-                  Our Birmingham lettings negotiator will contact you within 30
-                  minutes.
+              <div className="py-8 text-center">
+                <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto mb-3" />
+                <h4 className="text-xl font-bold text-white mb-1">Request Received</h4>
+                <p className="text-xs text-slate-300 max-w-xs mx-auto">
+                  A licensed negotiator from our Colmore Row office will confirm your appointment via phone within 1 hour.
                 </p>
               </div>
             )}
           </div>
         </div>
       )}
-
-      {/* 9. LOCAL PROPERTY FAQ ACCORDION */}
-      <section className="py-16 md:py-24 px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Property Lettings FAQ
-            </h2>
-            <p className="text-gray-400 text-lg">
-              Common questions from landlords and tenants
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <div
-                key={index}
-                className="bg-card-bg border border-gold-light/20 rounded-lg overflow-hidden hover:border-gold-light/60 transition"
-              >
-                <button
-                  onClick={() =>
-                    setExpandedFaq(expandedFaq === index ? null : index)
-                  }
-                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-oxford-navy/50 transition"
-                >
-                  <span className="font-semibold text-left text-gold-light">
-                    {faq.q}
-                  </span>
-                  <ChevronDown
-                    className={`w-5 h-5 text-gold-light flex-shrink-0 transition ${
-                      expandedFaq === index ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                {expandedFaq === index && (
-                  <div className="px-6 py-4 bg-oxford-navy/30 border-t border-gold-light/20">
-                    <p className="text-gray-300">{faq.a}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 10. FOOTER */}
-      <footer className="bg-oxford-navy border-t border-gold-light/20 py-12 px-4" id="contact">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-6 h-6 text-gold-light" />
-                <span className="font-bold text-gold-light">HIGHLAND & CO.</span>
-              </div>
-              <p className="text-sm text-gray-400">
-                Premium independent estate agency and lettings specialists serving
-                Birmingham and the West Midlands.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gold-light mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li>
-                  <a href="#properties" className="hover:text-gold-light transition">
-                    Properties To Let
-                  </a>
-                </li>
-                <li>
-                  <a href="#properties" className="hover:text-gold-light transition">
-                    Properties For Sale
-                  </a>
-                </li>
-                <li>
-                  <a href="#landlord" className="hover:text-gold-light transition">
-                    Landlord Services
-                  </a>
-                </li>
-                <li>
-                  <a href="#calculator" className="hover:text-gold-light transition">
-                    Valuation Calculator
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gold-light mb-4">Contact</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-gold-light" />
-                  <a href="tel:0121496880" className="hover:text-gold-light transition">
-                    0121 496 0880
-                  </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-gold-light" />
-                  <a href="mailto:hello@highlandco.co.uk" className="hover:text-gold-light transition">
-                    hello@highlandco.co.uk
-                  </a>
-                </li>
-                <li className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-gold-light mt-0.5 flex-shrink-0" />
-                  <span>Colmore Row, Birmingham, B3 2BJ</span>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gold-light mb-4">Accreditations</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-gold-light" />
-                  ARLA Propertymark
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-gold-light" />
-                  TPO Accredited
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-gold-light" />
-                  TDS Protected
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gold-light/20 pt-8">
-            <div className="text-center text-sm text-gray-400">
-              <p className="mb-2">
-                Highland & Co. Estate & Lettings Agents Ltd. Registered in England &
-                Wales. Company Registration Number: 12345678
-              </p>
-              <p className="mb-4">
-                All deposits are protected under the Tenancy Deposit Scheme (TDS) in
-                accordance with UK regulations.
-              </p>
-              <div className="flex flex-wrap justify-center gap-6 text-xs">
-                <a href="#" className="hover:text-gold-light transition">
-                  Privacy Policy
-                </a>
-                <a href="#" className="hover:text-gold-light transition">
-                  Terms & Conditions
-                </a>
-                <a href="#" className="hover:text-gold-light transition">
-                  Cookie Policy
-                </a>
-                <a href="#" className="hover:text-gold-light transition">
-                  Complaints Procedure
-                </a>
-              </div>
-              <p className="mt-4 text-xs">
-                © 2024 Highland & Co. Property Lettings & Estate Management. All rights
-                reserved.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
