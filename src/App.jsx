@@ -18,7 +18,6 @@ import {
   Search,
   TrendingUp,
   Lock,
-  Award,
   Sparkles,
 } from 'lucide-react'
 
@@ -30,10 +29,10 @@ import {
 // import property2Img from './assets/detached-edgbaston.jpg'
 // import property3Img from './assets/apartment-mailbox.jpg'
 // =========================================================================
-const heroImg = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80'
-const property1Img = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80'
-const property2Img = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1000&q=80'
-const property3Img = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1000&q=80'
+const heroImg = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=70&fm=webp'
+const property1Img = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=500&q=70&fm=webp'
+const property2Img = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=500&q=70&fm=webp'
+const property3Img = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=500&q=70&fm=webp'
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -192,8 +191,8 @@ export default function App() {
       <aside aria-label="Statutory Information" className="bg-[#0B1528] border-b border-amber-400/20 text-xs text-amber-200/90 py-2.5 px-4 tracking-wide">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-center sm:text-left">
           <div className="flex items-center gap-2 mx-auto sm:mx-0">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Independent Birmingham Estate Specialists | Regulated by <strong>ARLA Propertymark</strong> & <strong>TPO</strong></span>
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Independent Birmingham Estate Specialists | Regulated by <strong>ARLA Propertymark</strong> &amp; <strong>TPO</strong></span>
           </div>
           <div className="flex items-center gap-4 mx-auto sm:mx-0 font-medium">
             <span>Colmore Row Office:</span>
@@ -209,7 +208,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <a href="#" className="flex items-center gap-3 group focus:outline-none">
+            <a href="#properties" aria-label="Highland & Co. Home" className="flex items-center gap-3 group focus:outline-none">
               <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-[#C9A86A] to-[#99793D] flex items-center justify-center text-slate-950 shadow-lg shadow-[#C9A86A]/20">
                 <Building2 className="w-6 h-6 stroke-[2.2]" />
               </div>
@@ -296,15 +295,19 @@ export default function App() {
       </header>
 
       <main>
-        {/* 3. HERO SECTION WITH IMAGE IMPORT #1 */}
+        {/* 3. HERO SECTION WITH IMAGE IMPORT #1 (LCP OPTIMIZED) */}
         <section className="relative min-h-[640px] lg:min-h-[720px] flex items-center justify-center overflow-hidden">
           {/* Background Image Container */}
           <div className="absolute inset-0 z-0">
             <img
               src={heroImg}
-              alt="Luxury Georgian and modern Birmingham architectural developments"
-              className="w-full h-full object-cover object-center filter brightness-[0.38] contrast-[1.08] scale-105 transform animate-pulse duration-1000"
+              alt="Luxury modern Birmingham residential architecture"
+              className="w-full h-full object-cover object-center filter brightness-[0.38] contrast-[1.08]"
+              fetchPriority="high"
+              decoding="async"
               loading="eager"
+              width="900"
+              height="600"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#070D18] via-[#070D18]/70 to-[#070D18]/40" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#070D18]/90 via-transparent to-[#070D18]/90" />
@@ -468,9 +471,12 @@ export default function App() {
                   <div className="relative h-60 w-full overflow-hidden bg-slate-950">
                     <img
                       src={prop.image}
-                      alt={`${prop.title} situated in ${prop.location}`}
+                      alt={`${prop.title} in ${prop.location}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
+                      decoding="async"
+                      width="500"
+                      height="300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20" />
 
@@ -742,7 +748,7 @@ export default function App() {
             </button>
 
             {calculatorYield && (
-              <div className="mt-8 p-6 bg-[#070D18] border border-amber-400/40 rounded-2xl text-center animate-fadeIn">
+              <div className="mt-8 p-6 bg-[#070D18] border border-amber-400/40 rounded-2xl text-center">
                 <span className="text-xs uppercase tracking-wider text-slate-400 block font-medium">Estimated Gross Yield</span>
                 <span className="text-4xl sm:text-5xl font-extrabold text-amber-300 my-2 block">
                   {calculatorYield.toFixed(1)}%
@@ -922,10 +928,10 @@ export default function App() {
         <div className="max-w-7xl mx-auto pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
           <p>© {new Date().getFullYear()} Highland &amp; Co. Estate &amp; Lettings Agents Ltd. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-amber-300">Privacy Notice</a>
-            <a href="#" className="hover:text-amber-300">Terms of Tenancy</a>
-            <a href="#" className="hover:text-amber-300">CMP Certificate</a>
-            <a href="#" className="hover:text-amber-300">Complaints Procedure</a>
+            <a href="#contact" className="hover:text-amber-300">Privacy Notice</a>
+            <a href="#contact" className="hover:text-amber-300">Terms of Tenancy</a>
+            <a href="#contact" className="hover:text-amber-300">CMP Certificate</a>
+            <a href="#contact" className="hover:text-amber-300">Complaints Procedure</a>
           </div>
         </div>
       </footer>
